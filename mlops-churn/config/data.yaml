@@ -1,0 +1,41 @@
+# data.yaml — Dataset-specific configuration
+# Controls Kaggle source, file discovery, ingestion behavior, and schema
+
+kaggle:
+  dataset: "blastchar/telco-customer-churn"
+  file_pattern: "*.csv"
+  expected_files: []
+  expected_count: null
+
+ingest:
+  output_format: "parquet"
+  compression: "snappy"
+  chunk_size_rows: 50000
+  convert_dtypes: true         # Attempt automatic dtype inference (pyarrow)
+  validate_schema: true        # Fail loudly on missing required columns
+
+schema:
+  # Required columns — pipeline fails loudly if any are missing post-ingest
+  # Column names from the blastchar/telco-customer-churn dataset
+  required_columns:
+    - customerID
+    - gender
+    - SeniorCitizen
+    - Partner
+    - Dependents
+    - tenure
+    - PhoneService
+    - MultipleLines
+    - InternetService
+    - OnlineSecurity
+    - OnlineBackup
+    - DeviceProtection
+    - TechSupport
+    - StreamingTV
+    - StreamingMovies
+    - Contract
+    - PaperlessBilling
+    - PaymentMethod
+    - MonthlyCharges
+    - TotalCharges
+    - Churn
