@@ -1,0 +1,23 @@
+{
+    // Use IntelliSense to learn about possible attributes.
+    // Hover to view descriptions of existing attributes.
+    // For more information, visit: https://go.microsoft.com/fwlink/?linkid=830387
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Ingestao Pipeline",
+            "type": "debugpy",
+            "request": "launch",
+            // Caminho absoluto do script de ingestão
+            "program": "${workspaceFolder}/mlops-churn/notebooks/ingestao.py",
+            // CWD = raiz do mlops-churn para que Path(__file__).parent.parent resolva certo
+            "cwd": "${workspaceFolder}/mlops-churn",
+            "console": "integratedTerminal",
+            "env": {
+                // Garante que `from src.*` seja resolvido corretamente
+                "PYTHONPATH": "${workspaceFolder}/mlops-churn"
+            },
+            "justMyCode": false
+        }
+    ]
+}

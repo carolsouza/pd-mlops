@@ -21,7 +21,8 @@ for _p in PATHS_LIST:
 # %%
 from src.utils.logger import get_logger
 from src.utils.config_loader import load_yaml
-from src.downloader import check_kaggle_credentials
+from src.downloader import check_kaggle_credentials, list_remote_files, download_dataset
+from src.ingestion import ingest_csv_to_parquet
 
 # %%
 # fazer a leitura dos arquivos de configuração
@@ -32,7 +33,6 @@ pipeline_cfg = load_yaml(PIPELINE_CONFIG)
 # obtendo configuração do log
 log_cfg = pipeline_cfg.get("logging")
 
-# %%
 logger = get_logger(
     name='ingestao',
     logging_config=log_cfg
@@ -44,5 +44,75 @@ if check_kaggle_credentials(secrets_path=SECRETS_PATH):
     logger.info("Kaggle credentials set.")
 else:
     logger.error("Kaggle credentials not set.")
-    
+
 # %%
+# discovery de dados
+dataset = data_cfg.get("kaggle").get("dataset")
+file_pattern = data_cfg.get("kaggle").get("file_pattern", "*.csv")
+expected_files = data_cfg.get("kaggle").get("expected_files")
+
+logger.info(f"Dataset: {dataset}")
+logger.info(f"File pattern: {file_pattern}")
+logger.info(f"Files: {expected_files or '(auto-discovery)'}")
+
+# %%
+if not expected_files:
+    expected_files= list_remote_files(
+        dataset=dataset,
+        file_pattern=file_pattern,
+        logging_config=log_cfg
+    )
+    logger.info(f'Files discovered: {expected_files}')
+
+# %%
+# definir o diretório de destino dos dados brutos
+raw_dir = ROOT_DIR / pipeline_cfg.get("paths").get("raw_data_dir")
+raw_dir.mkdir(parents=True, exist_ok=True)
+
+logger.info(f'Raw data directory: {raw_dir}')
+
+skip_download = pipeline_cfg.get("paths").get("skip_download_if_exists", True)
+force_download = pipeline_cfg.get("paths").get("force_redownload", False)
+
+#download dos dados - fase Extract de um ETL ELT
+downloaded = download_dataset(
+    dataset=dataset,
+    expected_files=expected_files,
+    destination_dir=raw_dir,
+    skip_if_exists=skip_download,
+    force=force_download,
+    logging_config=log_cfg
+)
+
+logger.info(f'Downloaded files: {downloaded}')
+
+#verificar o conteúdo do diretório raw
+for f in sorted(raw_dir.glob('*.csv')):
+    logger.info('  %s (%.1f KB)', f.name, f.stat().st_size / 1024)
+
+#%%
+# definir o caminho de saída do Parquet
+processed_dir = ROOT_DIR / pipeline_cfg['paths']['processed_data_dir']
+output_path = processed_dir / pipeline_cfg['paths']['output_filename']
+
+logger.info('Saída: %s', output_path)
+
+# obtendo configurações de processamento
+compression = data_cfg.get("ingest").get("compression", "snappy")
+chunksize = data_cfg.get("ingest").get("chunk_size_rows", 50000)
+validate = data_cfg.get("ingest").get("validate_schema", True)
+required_columns = data_cfg.get("schema").get("required_columns")
+skip_ingest = pipeline_cfg.get("execution").get("skip_ingest_if_exists", True)
+force_ingest = pipeline_cfg.get("execution").get("force_ingest", False)
+
+result_path = ingest_csv_to_parquet(
+    raw_dir=raw_dir,
+    output_path=output_path,
+    compression=compression,
+    chunk_size_rows=chunksize,
+    validate_schema=validate,
+    required_columns=required_columns,
+    skip_if_exists=skip_ingest,
+    force=force_ingest,
+    logging_config=log_cfg
+)
