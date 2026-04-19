@@ -1,0 +1,173 @@
+# preprocessing.yaml — Configuração de Pré-processamento e Feature Engineering
+#
+# Princípio MLOps: separação entre política (YAML) e mecanismo (código).
+# Para ajustar qualquer transformação, edite apenas este arquivo.
+# O código em src/preprocessing.py não precisa mudar.
+#
+# Pipeline: data/processed/telco_customer_churn.parquet
+#        → data/features/telco_customer_churn_features.parquet
+
+# ── Saída ──────────────────────────────────────────────────────────────────────
+preprocessing:
+  output_dir: "data/features"
+  output_filename: "telco_customer_churn_features.parquet"
+  compression: "snappy"
+
+# ── 1. Imputação de Valores Ausentes ──────────────────────────────────────────
+# TotalCharges é armazenada como string no CSV original. Após conversão para
+# numérico, 11 registros ficam NaN (clientes com tenure=0, sem cobrança ainda).
+# Estratégia: imputar com mediana — distribuição assimétrica (skew=0.96).
+imputation:
+  - column: "TotalCharges"
+    strategy: "median"       # median | mean | constant
+    group_by: null           # sem agrupamento — correlação com tenure é suficiente
+
+# ── 2. Correção de Tipo ────────────────────────────────────────────────────────
+# TotalCharges vem como object no CSV; precisa ser convertida antes de imputar.
+type_cast:
+  - column: "TotalCharges"
+    dtype: "float64"
+
+# ── 3. Flags Binárias ─────────────────────────────────────────────────────────
+# Identifica clientes no primeiro mês (tenure=0) — sem histórico de cobrança.
+# Esses clientes têm comportamento distinto e são os que geram os 11 NaN acima.
+#
+# ⚠  Atenção MLOps — Inferência:
+#    Flags marcadas com inference_safe: false NÃO devem constar em features_to_keep
+#    pois dependem do target (Churn) — data leakage em produção.
+binary_flags:
+  - column: "tenure"
+    value: 0
+    new_column: "is_new_customer"      # 1 = cliente sem histórico de cobrança
+    inference_safe: true
+
+# ── 4. Encoding de Variáveis Binárias (Yes/No) ────────────────────────────────
+# Converte colunas Yes/No para 1/0. Inclui o target Churn para facilitar
+# o split treino/teste (o target é mantido como coluna numérica 0/1).
+binary_encoding:
+  columns:
+    - "Partner"
+    - "Dependents"
+    - "PhoneService"
+    - "PaperlessBilling"
+    - "Churn"             # target: Yes=1, No=0 — encodado aqui para manter no parquet final
+  positive_value: "Yes"   # "Yes" → 1, qualquer outro → 0
+
+# ── 5. Encoding de Categóricas com 3 Categorias ──────────────────────────────
+# MultipleLines, OnlineSecurity, etc. têm 3 valores:
+#   "No", "Yes" e "No phone service" / "No internet service"
+# Tratamento: mapear para ordinal (0=Não disponível, 1=Não, 2=Sim).
+# Isso preserva a hierarquia implícita (sem serviço < sem feature < com feature).
+ternary_encoding:
+  columns:
+    - "MultipleLines"
+    - "OnlineSecurity"
+    - "OnlineBackup"
+    - "DeviceProtection"
+    - "TechSupport"
+    - "StreamingTV"
+    - "StreamingMovies"
+  ordinal_map:
+    "No phone service": 0
+    "No internet service": 0
+    "No": 1
+    "Yes": 2
+
+# ── 6. Encoding de Categóricas Nominais (One-Hot) ────────────────────────────
+# gender: 2 categorias → 1 dummy (drop_first=true — Male=0, Female=1)
+# InternetService: 3 categorias com impacto distinto em churn
+# Contract: ordinal natural (Month-to-month tem maior churn)
+# PaymentMethod: 4 categorias sem ordenação natural → one-hot
+categorical_encoding:
+  - column: "gender"
+    strategy: "binary"
+    positive_value: "Female"      # Female=1, Male=0
+    new_column: "is_female"
+
+  - column: "InternetService"
+    strategy: "one_hot"
+    prefix: "internet"
+    drop_first: false             # mantém todas as 3 categorias (DSL, Fiber optic, No)
+
+  - column: "Contract"
+    strategy: "ordinal"
+    new_column: "contract_encoded"
+    ordinal_map:
+      "Month-to-month": 0         # maior risco de churn
+      "One year": 1
+      "Two year": 2               # menor risco de churn
+
+  - column: "PaymentMethod"
+    strategy: "one_hot"
+    prefix: "payment"
+    drop_first: false
+
+# ── 7. Transformação Logarítmica (log1p) ──────────────────────────────────────
+# SeniorCitizen: skew=1.83 — mas é binária (0/1), não aplicar log.
+# TotalCharges: skew=0.96 — aplica-se log1p para reduzir outliers de longa permanência.
+# tenure e MonthlyCharges têm skew próximo de 0 — log opcional mas incluído
+# pois melhora separação em modelos lineares (Logistic Regression, SVM).
+# log1p(x) = log(1+x) — seguro para x=0 (tenure pode ser 0).
+log_transform:
+  columns:
+    - "TotalCharges"        # skew=0.96 após conversão numérica
+    - "tenure"              # skew=0.24 — baixa mas log melhora linearidade
+
+# ── 8. Features de Razão ──────────────────────────────────────────────────────
+# Razões capuram relação entre cobrança e tempo de permanência.
+# monthly_to_total_ratio: clientes novos têm ratio alto; clientes antigos têm baixo.
+# total_per_month: equivalente ao MonthlyCharges médio histórico do cliente.
+ratio_features:
+  - name: "monthly_to_total_ratio"
+    numerator: "MonthlyCharges"
+    denominator: "TotalCharges"   # usar TotalCharges após imputação
+  - name: "total_per_month"
+    numerator: "TotalCharges"
+    denominator: "tenure"         # evitar divisão por zero: tenure=0 → NaN → imputar
+
+# ── 9. Seleção de Features ────────────────────────────────────────────────────
+# customerID é identificador — removido (não é feature preditiva).
+# Colunas categóricas originais são substituídas pelas versões encodadas.
+# O target (Churn) é mantido como coluna 0/1 para facilitar o split treino/teste.
+feature_selection:
+  target: "Churn"                 # 0=No, 1=Yes — 73.5% No / 26.5% Yes (desbalanceado)
+  drop_columns:
+    - "customerID"                # identificador único, sem valor preditivo
+  features_to_keep:
+    # ── Demográficas ──
+    - "is_female"
+    - "SeniorCitizen"             # já é binária (0/1)
+    - "Partner"
+    - "Dependents"
+    # ── Serviços de telefonia ──
+    - "PhoneService"
+    - "MultipleLines"
+    # ── Serviços de internet ──
+    - "internet_DSL"
+    - "internet_Fiber optic"
+    - "internet_No"
+    - "OnlineSecurity"
+    - "OnlineBackup"
+    - "DeviceProtection"
+    - "TechSupport"
+    - "StreamingTV"
+    - "StreamingMovies"
+    # ── Contrato e pagamento ──
+    - "contract_encoded"
+    - "PaperlessBilling"
+    - "payment_Bank transfer (automatic)"
+    - "payment_Credit card (automatic)"
+    - "payment_Electronic check"
+    - "payment_Mailed check"
+    # ── Financeiras e tempo ──
+    - "tenure"
+    - "log_tenure"
+    - "MonthlyCharges"
+    - "TotalCharges"
+    - "log_TotalCharges"
+    - "monthly_to_total_ratio"
+    - "total_per_month"
+    # ── Flags ──
+    - "is_new_customer"
+    # ── Target ──
+    - "Churn"

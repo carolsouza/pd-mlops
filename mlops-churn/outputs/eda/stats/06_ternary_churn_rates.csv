@@ -1,0 +1,10 @@
+feature,value,churn_rate,n
+OnlineSecurity,No internet service,0.074,1526
+OnlineSecurity,No,0.4177,3498
+OnlineSecurity,Yes,0.1461,2019
+TechSupport,No internet service,0.074,1526
+TechSupport,No,0.4164,3473
+TechSupport,Yes,0.1517,2044
+StreamingTV,No internet service,0.074,1526
+StreamingTV,No,0.3352,2810
+StreamingTV,Yes,0.3007,2707
