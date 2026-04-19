@@ -40,6 +40,7 @@ pipeline:
       - "log_TotalCharges"
       - "monthly_to_total_ratio"
       - "total_per_month"
+      - "n_services"          # 0-6, contínua — LR/KNN beneficiam de escala
 
 # ── Redução de Features (via FeatureReducer — src/feature_reducer.py) ─────────
 #

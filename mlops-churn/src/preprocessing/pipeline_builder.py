@@ -15,9 +15,10 @@ Ordem do pipeline (dependências entre etapas):
   4. BinaryEncodingTransformer — Yes/No → 1/0 (Partner, Dependents, Churn, …)
   5. TernaryEncodingTransformer — No service/No/Yes → 0/1/2
   6. CategoricalEncoder       — gender binary, Contract ordinal, InternetService/PaymentMethod one-hot
-  7. RatioFeatureTransformer  — monthly_to_total_ratio, total_per_month
-  8. LogTransformer           — log_TotalCharges, log_tenure
-  9. FeatureSelector          — subconjunto final definido no YAML
+  7. DerivedFeaturesTransformer — n_services, tenure_bin, has_fiber_monthly
+  8. RatioFeatureTransformer  — monthly_to_total_ratio, total_per_month
+  9. LogTransformer           — log_TotalCharges, log_tenure
+ 10. FeatureSelector          — subconjunto final definido no YAML
 
 ⚠  Transformadores stateful (StandardScalerTransformer) NÃO são incluídos aqui.
    Eles devem ser aplicados DENTRO do pipeline de modelagem (modelagem.py),
@@ -45,6 +46,7 @@ from src.preprocessing.transformers import (
     FeatureSelector,
     GroupMedianImputer,
     ConstantImputer,
+    DerivedFeaturesTransformer,
 )
 
 
@@ -110,6 +112,10 @@ class PreprocessingPipelineBuilder:
             )),
             ("encoding_categorico", CategoricalEncoder(
                 encodings=self.config.get("categorical_encoding", []),
+                logger=self.logger,
+            )),
+            ("features_derivadas", DerivedFeaturesTransformer(
+                **{k: v for k, v in self.config.get("derived_features", {}).items()},
                 logger=self.logger,
             )),
             ("razoes", RatioFeatureTransformer(

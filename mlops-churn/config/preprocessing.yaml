@@ -104,7 +104,32 @@ categorical_encoding:
     prefix: "payment"
     drop_first: false
 
-# ── 7. Transformação Logarítmica (log1p) ──────────────────────────────────────
+# ── 7. Features Derivadas de Domínio ─────────────────────────────────────────
+# Criadas APÓS os encodings, pois dependem das colunas já transformadas.
+#
+# n_services: conta quantos add-ons o cliente contratou (valor==2 no encoding
+#   ternário significa "Yes"). Clientes com mais serviços têm menor churn.
+#
+# tenure_bin: faixa ordinal de maturidade (0=novo, 1=iniciante 1-12m,
+#   2=médio 13-24m, 3=estabelecido 25-48m, 4=fiel 49+m). Captura o efeito
+#   não-linear de retenção melhor que tenure contínuo em modelos lineares.
+#
+# has_fiber_monthly: flag binária — fibra óptica + contrato mês-a-mês.
+#   Essa combinação concentra a maior taxa de churn no dataset (~42%).
+derived_features:
+  service_columns:
+    - "OnlineSecurity"
+    - "OnlineBackup"
+    - "DeviceProtection"
+    - "TechSupport"
+    - "StreamingTV"
+    - "StreamingMovies"
+  tenure_column: "tenure"
+  tenure_bins: [0, 12, 24, 48, 72]   # bordas das faixas (72 = max do dataset)
+  fiber_column: "internet_Fiber optic"
+  contract_column: "contract_encoded"
+
+# ── 8. Transformação Logarítmica (log1p) ──────────────────────────────────────
 # SeniorCitizen: skew=1.83 — mas é binária (0/1), não aplicar log.
 # TotalCharges: skew=0.96 — aplica-se log1p para reduzir outliers de longa permanência.
 # tenure e MonthlyCharges têm skew próximo de 0 — log opcional mas incluído
@@ -171,6 +196,10 @@ feature_selection:
     - "log_TotalCharges"
     - "monthly_to_total_ratio"
     - "total_per_month"
+    # ── Features derivadas de domínio ──
+    - "n_services"
+    - "tenure_bin" 
+    - "has_fiber_monthly"
     # ── Flags ──
     - "is_new_customer"
     # ── Target ──
