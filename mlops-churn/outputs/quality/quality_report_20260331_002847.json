@@ -1,0 +1,897 @@
+{
+  "success": true,
+  "total": 43,
+  "passed": 43,
+  "failed": 0,
+  "details": [
+    {
+      "type": "expect_table_row_count_to_be_between",
+      "column": null,
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "min_value": 6000,
+        "max_value": 8000
+      },
+      "result": {
+        "observed_value": 7043
+      }
+    },
+    {
+      "type": "expect_table_columns_to_match_set",
+      "column": null,
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "column_set": [
+          "customerID",
+          "gender",
+          "SeniorCitizen",
+          "Partner",
+          "Dependents",
+          "tenure",
+          "PhoneService",
+          "MultipleLines",
+          "InternetService",
+          "OnlineSecurity",
+          "OnlineBackup",
+          "DeviceProtection",
+          "TechSupport",
+          "StreamingTV",
+          "StreamingMovies",
+          "Contract",
+          "PaperlessBilling",
+          "PaymentMethod",
+          "MonthlyCharges",
+          "TotalCharges",
+          "Churn"
+        ]
+      },
+      "result": {
+        "observed_value": [
+          "Churn",
+          "Contract",
+          "Dependents",
+          "DeviceProtection",
+          "InternetService",
+          "MonthlyCharges",
+          "MultipleLines",
+          "OnlineBackup",
+          "OnlineSecurity",
+          "PaperlessBilling",
+          "Partner",
+          "PaymentMethod",
+          "PhoneService",
+          "SeniorCitizen",
+          "StreamingMovies",
+          "StreamingTV",
+          "TechSupport",
+          "TotalCharges",
+          "customerID",
+          "gender",
+          "tenure"
+        ]
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "customerID",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_unique",
+      "column": "customerID",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "gender",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "gender",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Male",
+          "Female"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "SeniorCitizen",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "SeniorCitizen",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          0,
+          1
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "Partner",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "Partner",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "Dependents",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "Dependents",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "tenure",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "column": "tenure",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "min_value": 0.0,
+        "max_value": 72.0
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "PhoneService",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "PhoneService",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "MultipleLines",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "MultipleLines",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No",
+          "No phone service"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "InternetService",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "InternetService",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "DSL",
+          "Fiber optic",
+          "No"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "OnlineSecurity",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "OnlineSecurity",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No",
+          "No internet service"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "OnlineBackup",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "OnlineBackup",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No",
+          "No internet service"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "DeviceProtection",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "DeviceProtection",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No",
+          "No internet service"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "TechSupport",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "TechSupport",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No",
+          "No internet service"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "StreamingTV",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "StreamingTV",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No",
+          "No internet service"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "StreamingMovies",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "StreamingMovies",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No",
+          "No internet service"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "Contract",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "Contract",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Month-to-month",
+          "One year",
+          "Two year"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "PaperlessBilling",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "PaperlessBilling",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "PaymentMethod",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "PaymentMethod",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Electronic check",
+          "Mailed check",
+          "Bank transfer (automatic)",
+          "Credit card (automatic)"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "MonthlyCharges",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_between",
+      "column": "MonthlyCharges",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "min_value": 0.0,
+        "max_value": 150.0
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "TotalCharges",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "mostly": 0.99
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_not_be_null",
+      "column": "Churn",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data"
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    },
+    {
+      "type": "expect_column_values_to_be_in_set",
+      "column": "Churn",
+      "success": true,
+      "kwargs": {
+        "batch_id": "pipeline_source-input_data",
+        "value_set": [
+          "Yes",
+          "No"
+        ]
+      },
+      "result": {
+        "element_count": 7043,
+        "unexpected_count": 0,
+        "unexpected_percent": 0.0,
+        "partial_unexpected_list": [],
+        "missing_count": 0,
+        "missing_percent": 0.0,
+        "unexpected_percent_total": 0.0,
+        "unexpected_percent_nonmissing": 0.0,
+        "partial_unexpected_counts": [],
+        "partial_unexpected_index_list": []
+      }
+    }
+  ]
+}

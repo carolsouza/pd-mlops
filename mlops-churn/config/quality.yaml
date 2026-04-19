@@ -1,0 +1,201 @@
+# quality.yaml — Configuração de Qualidade de Dados via Great Expectations
+#
+# Este arquivo define TODAS as regras de qualidade. O código (src/quality.py)
+# é genérico: ele lê este YAML e executa as verificações dinamicamente.
+#
+# Princípio MLOps: separar política (YAML) de mecanismo (código).
+# Para alterar um critério basta editar este arquivo — sem tocar no código.
+#
+# Tipos de expectation usam snake_case (padrão GE).
+# kwargs seguem a assinatura exata de cada classe GE.
+quality:
+  suite_name: "telco_customer_churn_quality_suite"
+  # fail_pipeline_on_error: true → lança RuntimeError se qualquer check falhar
+  # Use true em produção, false durante exploração / desenvolvimento
+  fail_pipeline_on_error: false
+  output_dir: "outputs/quality"        # relatório JSON salvo aqui
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Expectations de TABELA (sem coluna específica)
+# Validam propriedades globais do dataset
+# ─────────────────────────────────────────────────────────────────────────────
+table_expectations:
+
+  # O dataset Telco Customer Churn tem ~7.043 linhas
+  - type: expect_table_row_count_to_be_between
+    kwargs:
+      min_value: 6000
+      max_value: 8000
+
+  # Garante que o schema não mudou — nenhuma coluna foi adicionada ou removida
+  - type: expect_table_columns_to_match_set
+    kwargs:
+      column_set:
+        - customerID
+        - gender
+        - SeniorCitizen
+        - Partner
+        - Dependents
+        - tenure
+        - PhoneService
+        - MultipleLines
+        - InternetService
+        - OnlineSecurity
+        - OnlineBackup
+        - DeviceProtection
+        - TechSupport
+        - StreamingTV
+        - StreamingMovies
+        - Contract
+        - PaperlessBilling
+        - PaymentMethod
+        - MonthlyCharges
+        - TotalCharges
+        - Churn
+      exact_match: true
+
+# ─────────────────────────────────────────────────────────────────────────────
+# Expectations de COLUNA
+# Cada chave é o nome de uma coluna; o valor é uma lista de checks.
+# Ordem importa: checks mais baratos (null) devem vir antes de range checks.
+# ─────────────────────────────────────────────────────────────────────────────
+column_expectations:
+
+  # ── Identificador ─────────────────────────────────────────────────────────
+  customerID:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_unique
+
+  # ── Demográficas categóricas ───────────────────────────────────────────────
+  gender:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Male", "Female"]
+
+  SeniorCitizen:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: [0, 1]
+
+  Partner:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No"]
+
+  Dependents:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No"]
+
+  # ── Numérica contínua — tempo de contrato ─────────────────────────────────
+  tenure:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0
+        max_value: 72           # máximo histórico do dataset
+
+  # ── Serviços de telefone ───────────────────────────────────────────────────
+  PhoneService:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No"]
+
+  MultipleLines:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No", "No phone service"]
+
+  # ── Serviços de internet ───────────────────────────────────────────────────
+  InternetService:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["DSL", "Fiber optic", "No"]
+
+  OnlineSecurity:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No", "No internet service"]
+
+  OnlineBackup:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No", "No internet service"]
+
+  DeviceProtection:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No", "No internet service"]
+
+  TechSupport:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No", "No internet service"]
+
+  StreamingTV:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No", "No internet service"]
+
+  StreamingMovies:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No", "No internet service"]
+
+  # ── Dados de conta / contrato ──────────────────────────────────────────────
+  Contract:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Month-to-month", "One year", "Two year"]
+
+  PaperlessBilling:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No"]
+
+  PaymentMethod:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set:
+          - "Electronic check"
+          - "Mailed check"
+          - "Bank transfer (automatic)"
+          - "Credit card (automatic)"
+
+  # ── Financeiras numéricas ──────────────────────────────────────────────────
+  MonthlyCharges:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_between
+      kwargs:
+        min_value: 0.0
+        max_value: 150.0       # máximo histórico ~118; margem adicionada
+
+  TotalCharges:
+    # TotalCharges vem como string no CSV original; pode ter espaços em clientes novos
+    # mostly: 0.99 → toleramos até 1% de nulos/vazios (tenure = 0)
+    - type: expect_column_values_to_not_be_null
+      kwargs:
+        mostly: 0.99
+
+  # ── Variável alvo ──────────────────────────────────────────────────────────
+  Churn:
+    - type: expect_column_values_to_not_be_null
+    - type: expect_column_values_to_be_in_set
+      kwargs:
+        value_set: ["Yes", "No"]
