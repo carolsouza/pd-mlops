@@ -15,12 +15,14 @@ preprocessing:
 
 # ── 1. Imputação de Valores Ausentes ──────────────────────────────────────────
 # TotalCharges é armazenada como string no CSV original. Após conversão para
-# numérico, 11 registros ficam NaN (clientes com tenure=0, sem cobrança ainda).
-# Estratégia: imputar com mediana — distribuição assimétrica (skew=0.96).
+# numérico, 11 registros ficam NaN — todos têm tenure=0 (novos clientes sem
+# histórico de cobrança). O valor correto é 0, não a mediana: é uma regra de
+# negócio (sem tempo de contrato → sem cobrança acumulada), não estatística.
+# Estratégia "constant" é stateless: não aprende dos dados → sem risco de leakage.
 imputation:
   - column: "TotalCharges"
-    strategy: "median"       # median | mean | constant
-    group_by: null           # sem agrupamento — correlação com tenure é suficiente
+    strategy: "constant"     # median | mean | constant
+    fill_value: 0            # tenure=0 → TotalCharges ainda não foi cobrado
 
 # ── 2. Correção de Tipo ────────────────────────────────────────────────────────
 # TotalCharges vem como object no CSV; precisa ser convertida antes de imputar.
@@ -121,9 +123,11 @@ ratio_features:
   - name: "monthly_to_total_ratio"
     numerator: "MonthlyCharges"
     denominator: "TotalCharges"   # usar TotalCharges após imputação
+    fill_nan: 0                   # tenure=0 → TotalCharges=0 → razão indefinida; 0 = sem histórico
   - name: "total_per_month"
     numerator: "TotalCharges"
     denominator: "tenure"         # evitar divisão por zero: tenure=0 → NaN → imputar
+    fill_nan: 0                   # tenure=0 → sem meses pagos → média = 0
 
 # ── 9. Seleção de Features ────────────────────────────────────────────────────
 # customerID é identificador — removido (não é feature preditiva).

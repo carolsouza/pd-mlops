@@ -7,7 +7,7 @@ from src.preprocessing.transformers.categorical_encoder import CategoricalEncode
 from src.preprocessing.transformers.ratio_features import RatioFeatureTransformer
 from src.preprocessing.transformers.log_transform import LogTransformer
 from src.preprocessing.transformers.feature_selector import FeatureSelector
-from src.preprocessing.transformers.stateful import GroupMedianImputer, StandardScalerTransformer
+from src.preprocessing.transformers.stateful import GroupMedianImputer, StandardScalerTransformer, ConstantImputer
 
 __all__ = [
     # Pipeline do churn (stateless)
@@ -22,4 +22,5 @@ __all__ = [
     # Stateful (usar apenas no pipeline de modelagem, após o split)
     "GroupMedianImputer",
     "StandardScalerTransformer",
+    "ConstantImputer",
 ]

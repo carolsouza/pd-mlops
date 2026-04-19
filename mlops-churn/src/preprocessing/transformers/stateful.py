@@ -117,6 +117,32 @@ class GroupMedianImputer(BaseFeatureTransformer):
         return X
 
 
+class ConstantImputer(BaseFeatureTransformer):
+    """
+    Imputa valores ausentes com um valor constante definido no YAML.
+
+    Stateless: não aprende parâmetros dos dados → sem risco de data leakage.
+    Indicado quando o valor ausente tem semântica conhecida por regra de negócio
+    (ex: TotalCharges=0 quando tenure=0, pois o cliente ainda não foi cobrado).
+    """
+
+    def __init__(self, target_col: str, fill_value: float = 0, logger=None) -> None:
+        self.target_col = target_col
+        self.fill_value = fill_value
+        self.logger = logger
+
+    def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
+        X = X.copy()
+        n_antes = int(X[self.target_col].isna().sum())
+        X[self.target_col] = X[self.target_col].fillna(self.fill_value)
+        n_depois = int(X[self.target_col].isna().sum())
+        self._log(
+            "ConstantImputer.transform: '%s' — NaN antes=%d, depois=%d (fill_value=%s)",
+            self.target_col, n_antes, n_depois, self.fill_value,
+        )
+        return X
+
+
 class StandardScalerTransformer(BaseFeatureTransformer):
     """
     Aplica Z-score normalization: z = (x − μ) / σ.

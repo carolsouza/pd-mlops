@@ -29,6 +29,7 @@ from src.preprocessing.transformers import (
     FeatureSelector,
     GroupMedianImputer,
     StandardScalerTransformer,
+    ConstantImputer,
 )
 
 __all__ = [
@@ -48,4 +49,5 @@ __all__ = [
     # Stateful (somente pipeline de modelagem)
     "GroupMedianImputer",
     "StandardScalerTransformer",
+    "ConstantImputer",
 ]

@@ -11,7 +11,7 @@ Princípio de design — Separação entre política e mecanismo:
 Ordem do pipeline (dependências entre etapas):
   1. TypeCastTransformer      — TotalCharges object → float64 (deve ser o primeiro)
   2. BinaryFlagTransformer    — is_new_customer (usa tenure original)
-  3. GroupMedianImputer       — imputa TotalCharges NaN com mediana global
+  3. ConstantImputer          — imputa TotalCharges NaN com 0 (tenure=0 → sem cobrança)
   4. BinaryEncodingTransformer — Yes/No → 1/0 (Partner, Dependents, Churn, …)
   5. TernaryEncodingTransformer — No service/No/Yes → 0/1/2
   6. CategoricalEncoder       — gender binary, Contract ordinal, InternetService/PaymentMethod one-hot
@@ -23,10 +23,9 @@ Ordem do pipeline (dependências entre etapas):
    Eles devem ser aplicados DENTRO do pipeline de modelagem (modelagem.py),
    APÓS o split treino/holdout, para evitar data leakage.
 
-   Exceção pragmática: GroupMedianImputer está incluído no passo 3 porque os
-   11 NaN de TotalCharges são todos tenure=0 (clientes novos sem histórico) e
-   a mediana global é idêntica com ou sem esses 11 registros. O impacto de
-   data leakage é desprezível (<0.2% dos dados).
+   Imputação com strategy="constant" é stateless (fill_value fixo no YAML) —
+   sem risco de data leakage. Os 11 NaN de TotalCharges têm tenure=0, portanto
+   TotalCharges=0 é a regra de negócio correta (sem histórico → sem cobrança).
 """
 from __future__ import annotations
 
@@ -45,6 +44,7 @@ from src.preprocessing.transformers import (
     LogTransformer,
     FeatureSelector,
     GroupMedianImputer,
+    ConstantImputer,
 )
 
 
@@ -73,17 +73,22 @@ class PreprocessingPipelineBuilder:
             KeyError: Se uma seção obrigatória estiver ausente no config.
         """
         imputation_specs = self.config.get("imputation", [])
-        imputacao_steps = [
-            (
-                f"imputacao_{spec['column']}",
-                GroupMedianImputer(
+        imputacao_steps = []
+        for spec in imputation_specs:
+            strategy = spec.get("strategy", "median")
+            if strategy == "constant":
+                transformer = ConstantImputer(
+                    target_col=spec["column"],
+                    fill_value=spec.get("fill_value", 0),
+                    logger=self.logger,
+                )
+            else:
+                transformer = GroupMedianImputer(
                     target_col=spec["column"],
                     group_col=spec.get("group_by"),
                     logger=self.logger,
-                ),
-            )
-            for spec in imputation_specs
-        ]
+                )
+            imputacao_steps.append((f"imputacao_{spec['column']}", transformer))
 
         etapas = [
             ("type_cast", TypeCastTransformer(

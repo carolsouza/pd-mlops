@@ -1,0 +1,64 @@
+{
+  "best_model": "logistic_regression",
+  "best_run_id": "88b71ee722b545a78f2d819b62fe588e",
+  "experiment_name": "telco-churn-experiments",
+  "cv_roc_auc_mean": 0.848,
+  "cv_roc_auc_std": 0.0118,
+  "cv_f1_mean": 0.631,
+  "holdout_roc_auc": 0.8564,
+  "holdout_f1": 0.6498,
+  "holdout_precision": 0.5366,
+  "holdout_recall": 0.8235,
+  "holdout_accuracy": 0.7644,
+  "best_params": {
+    "C": 0.09266536384491456,
+    "penalty": "l2",
+    "solver": "saga"
+  },
+  "reducer_params": {
+    "method": "pca",
+    "n_components": 25
+  },
+  "top3_base_models": [
+    "logistic_regression",
+    "xgboost",
+    "gradient_boosting"
+  ],
+  "all_models_ranked": [
+    {
+      "modelo": "logistic_regression",
+      "cv_roc_auc_mean": 0.8479748761324274,
+      "cv_f1_mean": 0.630983426228122
+    },
+    {
+      "modelo": "xgboost",
+      "cv_roc_auc_mean": 0.8470964634894435,
+      "cv_f1_mean": 0.6299467679918767
+    },
+    {
+      "modelo": "gradient_boosting",
+      "cv_roc_auc_mean": 0.8470321528098059,
+      "cv_f1_mean": 0.5753119391555414
+    },
+    {
+      "modelo": "lightgbm",
+      "cv_roc_auc_mean": 0.8452059856352709,
+      "cv_f1_mean": 0.6285860989762216
+    },
+    {
+      "modelo": "random_forest",
+      "cv_roc_auc_mean": 0.8440952025466737,
+      "cv_f1_mean": 0.6260355061602577
+    },
+    {
+      "modelo": "decision_tree",
+      "cv_roc_auc_mean": 0.8385231833477251,
+      "cv_f1_mean": 0.6213130593888252
+    },
+    {
+      "modelo": "knn",
+      "cv_roc_auc_mean": 0.8380990301142056,
+      "cv_f1_mean": 0.5689433874527665
+    }
+  ]
+}

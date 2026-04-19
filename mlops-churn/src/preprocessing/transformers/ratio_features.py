@@ -60,9 +60,13 @@ class RatioFeatureTransformer(BaseFeatureTransformer):
                 )
                 continue
 
-            X[name] = (X[num] / X[den].replace(0, np.nan)).replace(
+            ratio = (X[num] / X[den].replace(0, np.nan)).replace(
                 [np.inf, -np.inf], np.nan
             )
+            fill = spec.get('fill_nan')
+            if fill is not None:
+                ratio = ratio.fillna(fill)
+            X[name] = ratio
             criadas.append(name)
 
         self._log("RatioFeatureTransformer: features criadas: %s", criadas)
