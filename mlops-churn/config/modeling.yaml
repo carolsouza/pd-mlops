@@ -41,6 +41,7 @@ pipeline:
       - "monthly_to_total_ratio"
       - "total_per_month"
       - "n_services"          # 0-6, contínua — LR/KNN beneficiam de escala
+      - "avg_monthly_per_service"  # razão MonthlyCharges/n_services
 
 # ── Redução de Features (via FeatureReducer — src/feature_reducer.py) ─────────
 #
@@ -81,7 +82,7 @@ feature_reduction:
       n_components:
         type: "int"
         low: 5
-        high: 25
+        high: 28
 
   lda:
     # LDA supervisionado — maximiza a separação entre classes no espaço projetado.

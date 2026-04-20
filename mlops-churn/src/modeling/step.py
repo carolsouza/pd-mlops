@@ -225,7 +225,16 @@ class ModelingStep(PipelineStep):
 
         # ── 11. Registro no Model Registry ───────────────────────────────────
         registry_name = self._modeling_cfg.get('registry_name', 'telco-churn-best')
-        tracker.registrar_modelo(best_run_id, registry_name)
+        registrado = tracker.registrar_modelo(
+            run_id          =best_run_id,
+            registry_name   =registry_name,
+            cv_roc_auc_mean =resultado_melhor['cv_roc_auc_mean'],
+            cv_f1_mean      =resultado_melhor['cv_f1_mean'],
+        )
+        if not registrado:
+            self.logger.info(
+                'Modelo desta run NAO promovido para o registry — versao anterior e superior.',
+            )
 
         # ── 12. Resumo JSON ───────────────────────────────────────────────────
         ranking_registros = [

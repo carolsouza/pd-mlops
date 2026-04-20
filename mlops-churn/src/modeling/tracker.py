@@ -215,18 +215,98 @@ class MLflowTracker:
             if holdout_plot_path and Path(holdout_plot_path).exists():
                 mlflow.log_artifact(str(holdout_plot_path), artifact_path='plots')
 
-    def registrar_modelo(self, run_id: str, registry_name: str) -> None:
-        """Registra o modelo no MLflow Model Registry."""
+    def metricas_versao_atual(self, registry_name: str) -> dict | None:
+        """
+        Busca as métricas cv_roc_auc_mean e cv_f1_mean da versão mais recente
+        registrada em `registry_name`. Retorna None se não houver versão anterior.
+        """
+        try:
+            client = mlflow.MlflowClient()
+            versoes = client.search_model_versions(f"name='{registry_name}'")
+            if not versoes:
+                return None
+            # Versão com maior número de versão = mais recente
+            ultima = max(versoes, key=lambda v: int(v.version))
+            run = client.get_run(ultima.run_id)
+            metricas = run.data.metrics
+            return {
+                'cv_roc_auc_mean': metricas.get('cv_roc_auc_mean'),
+                'cv_f1_mean'     : metricas.get('cv_f1_mean'),
+                'version'        : ultima.version,
+                'run_id'         : ultima.run_id,
+            }
+        except Exception as exc:
+            if self.logger:
+                self.logger.warning('Nao foi possivel buscar versao atual do registry: %s', exc)
+            return None
+
+    def registrar_modelo(
+        self,
+        run_id: str,
+        registry_name: str,
+        cv_roc_auc_mean: float | None = None,
+        cv_f1_mean: float | None = None,
+        forcar: bool = False,
+    ) -> bool:
+        """
+        Registra o modelo no MLflow Model Registry somente se for melhor que a
+        versão atual (critério: cv_roc_auc_mean maior; empate desempata por cv_f1_mean).
+
+        Parâmetros
+        ----------
+        cv_roc_auc_mean : AUC CV da nova run (para comparação)
+        cv_f1_mean      : F1 CV da nova run (desempate)
+        forcar          : se True, registra sem comparar (útil no primeiro registro)
+
+        Retorna
+        -------
+        bool : True se registrou, False se descartou por ser inferior
+        """
         model_uri = f'runs:/{run_id}/model'
+
+        versao_atual = self.metricas_versao_atual(registry_name)
+
+        if versao_atual is None or forcar:
+            # Nenhuma versão anterior — registra sem condição
+            motivo = 'primeiro registro' if versao_atual is None else 'forçado'
+        else:
+            auc_atual = versao_atual.get('cv_roc_auc_mean') or 0.0
+            f1_atual  = versao_atual.get('cv_f1_mean') or 0.0
+            auc_nova  = cv_roc_auc_mean or 0.0
+            f1_nova   = cv_f1_mean or 0.0
+
+            melhor = (auc_nova > auc_atual) or (
+                abs(auc_nova - auc_atual) < 1e-6 and f1_nova > f1_atual
+            )
+
+            if not melhor:
+                if self.logger:
+                    self.logger.info(
+                        'Registro IGNORADO: nova run (AUC=%.4f, F1=%.4f) nao supera '
+                        'versao %s atual (AUC=%.4f, F1=%.4f).',
+                        auc_nova, f1_nova,
+                        versao_atual['version'], auc_atual, f1_atual,
+                    )
+                return False
+
+            motivo = (
+                f'AUC {auc_atual:.4f} → {auc_nova:.4f}'
+                if abs(auc_nova - auc_atual) >= 1e-6
+                else f'F1 {f1_atual:.4f} → {f1_nova:.4f} (AUC empatado)'
+            )
+
         try:
             resultado = mlflow.register_model(model_uri=model_uri, name=registry_name)
             if self.logger:
                 self.logger.info(
-                    'Modelo registrado: %s (versao %s)', registry_name, resultado.version
+                    'Modelo registrado: %s versao %s (%s).',
+                    registry_name, resultado.version, motivo,
                 )
+            return True
         except Exception as exc:
             if self.logger:
                 self.logger.warning('Model Registry nao disponivel: %s', exc)
+            return False
 
     def salvar_resumo_json(
         self,

@@ -116,6 +116,11 @@ categorical_encoding:
 #
 # has_fiber_monthly: flag binária — fibra óptica + contrato mês-a-mês.
 #   Essa combinação concentra a maior taxa de churn no dataset (~42%).
+#
+# avg_monthly_per_service: MonthlyCharges / n_services.
+#   Clientes sem add-ons (n_services=0) recebem 0. Captura relação entre
+#   gasto mensal e adesão de serviços — alta cobrança com poucos serviços
+#   pode indicar plano premium com maior sensibilidade a preço.
 derived_features:
   service_columns:
     - "OnlineSecurity"
@@ -198,8 +203,9 @@ feature_selection:
     - "total_per_month"
     # ── Features derivadas de domínio ──
     - "n_services"
-    - "tenure_bin" 
+    - "tenure_bin"
     - "has_fiber_monthly"
+    - "avg_monthly_per_service"
     # ── Flags ──
     - "is_new_customer"
     # ── Target ──

@@ -15,6 +15,11 @@ Cria três grupos de features com base em domínio de negócio:
   has_fiber_monthly → flag de alto risco: fibra óptica + contrato mês-a-mês.
                       Essa combinação concentra a maioria dos churners.
 
+  avg_monthly_per_service → MonthlyCharges / n_services.
+                            Clientes que pagam mais por add-on têm mais a perder ao sair;
+                            valores altos indicam poucos serviços com cobrança elevada.
+                            n_services=0 → fill 0 (sem add-ons contratados).
+
 Stateless: fit() é no-op — sem risco de data leakage.
 """
 from __future__ import annotations
@@ -50,6 +55,7 @@ class DerivedFeaturesTransformer(BaseFeatureTransformer):
         tenure_bins: list[int] | None = None,
         fiber_column: str = "internet_Fiber optic",
         contract_column: str = "contract_encoded",
+        monthly_charges_column: str = "MonthlyCharges",
         logger: Any = None,
     ) -> None:
         self.service_columns = service_columns
@@ -57,6 +63,7 @@ class DerivedFeaturesTransformer(BaseFeatureTransformer):
         self.tenure_bins = tenure_bins or [0, 12, 24, 48, 72]
         self.fiber_column = fiber_column
         self.contract_column = contract_column
+        self.monthly_charges_column = monthly_charges_column
         self.logger = logger
 
     def transform(self, X: pd.DataFrame, y=None) -> pd.DataFrame:
@@ -70,6 +77,24 @@ class DerivedFeaturesTransformer(BaseFeatureTransformer):
                 "DerivedFeaturesTransformer: n_services criado (%d colunas): min=%d max=%d",
                 len(cols_presentes), int(X["n_services"].min()), int(X["n_services"].max()),
             )
+
+            # ── avg_monthly_per_service: MonthlyCharges / n_services
+            if self.monthly_charges_column in X.columns:
+                X["avg_monthly_per_service"] = (
+                    X[self.monthly_charges_column] / X["n_services"].replace(0, np.nan)
+                ).fillna(0.0)
+                self._log(
+                    "DerivedFeaturesTransformer: avg_monthly_per_service criado "
+                    "(média=%.2f, zeros=%d).",
+                    float(X["avg_monthly_per_service"].mean()),
+                    int((X["avg_monthly_per_service"] == 0).sum()),
+                )
+            else:
+                self._warn(
+                    "DerivedFeaturesTransformer: coluna '%s' ausente — "
+                    "avg_monthly_per_service ignorado.",
+                    self.monthly_charges_column,
+                )
         else:
             self._warn("DerivedFeaturesTransformer: nenhuma service_column encontrada.")
 
