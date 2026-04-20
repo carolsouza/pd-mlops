@@ -1,30 +1,37 @@
 {
-  "best_model": "logistic_regression",
-  "best_run_id": "196f199680dc4fe8bee30cd33ffe9f9a",
+  "best_model": "voting",
+  "best_run_id": "e9af83bd53b245ff9891bf09e182ec2d",
   "experiment_name": "telco-churn-experiments",
-  "cv_roc_auc_mean": 0.8483,
-  "cv_roc_auc_std": 0.0124,
-  "cv_f1_mean": 0.6333,
-  "holdout_roc_auc": 0.8561,
-  "holdout_f1": 0.6456,
-  "holdout_precision": 0.5321,
-  "holdout_recall": 0.8209,
-  "holdout_accuracy": 0.7608,
+  "cv_roc_auc_mean": 0.849,
+  "cv_roc_auc_std": 0.012,
+  "cv_f1_mean": 0.6324,
+  "holdout_roc_auc": 0.8558,
+  "holdout_f1": 0.642,
+  "holdout_precision": 0.5413,
+  "holdout_recall": 0.7888,
+  "holdout_accuracy": 0.7665,
   "best_params": {
-    "C": 0.09643621750410883,
-    "penalty": "l2",
-    "solver": "saga"
+    "w_logistic_regression": 4,
+    "w_xgboost": 3,
+    "w_gradient_boosting": 1
   },
-  "reducer_params": {
-    "method": "pca",
-    "n_components": 25
-  },
+  "reducer_params": {},
   "top3_base_models": [
-    "logistic_regression",
-    "xgboost",
-    "gradient_boosting"
+    "voting",
+    "stacking",
+    "logistic_regression"
   ],
   "all_models_ranked": [
+    {
+      "modelo": "voting",
+      "cv_roc_auc_mean": 0.8490264403143304,
+      "cv_f1_mean": 0.6324455698128046
+    },
+    {
+      "modelo": "stacking",
+      "cv_roc_auc_mean": 0.8489585392631913,
+      "cv_f1_mean": 0.6003960739887695
+    },
     {
       "modelo": "logistic_regression",
       "cv_roc_auc_mean": 0.8482780185588068,
@@ -39,6 +46,11 @@
       "modelo": "gradient_boosting",
       "cv_roc_auc_mean": 0.8466758400634117,
       "cv_f1_mean": 0.5819172748954247
+    },
+    {
+      "modelo": "svc",
+      "cv_roc_auc_mean": 0.8449816042668793,
+      "cv_f1_mean": 0.6257122586090451
     },
     {
       "modelo": "lightgbm",

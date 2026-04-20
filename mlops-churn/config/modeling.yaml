@@ -274,7 +274,7 @@ models:
   # max_samples_for_tuning: subsampling durante trials do Optuna para viabilizar
   #   a busca. O modelo final é treinado com todos os dados.
   svc:
-    enabled: false
+    enabled: true
     module: "sklearn.svm"
     class: "SVC"
     default_params:
@@ -452,7 +452,7 @@ ensembles:
   top_n_base_models: 3              # usa os N melhores individuais como base
 
   stacking:
-    enabled: false
+    enabled: true
     inner_cv_folds: 5               # CV interno do stacking
     meta_learner_search_space:
       meta_C:
@@ -461,7 +461,7 @@ ensembles:
         high: 1.0e4
 
   voting:
-    enabled: false
+    enabled: true
     voting: "soft"                  # soft usa predict_proba — melhor para ROC-AUC
     weight_low: 1                   # peso mínimo por modelo base
     weight_high: 10                 # peso máximo por modelo base
