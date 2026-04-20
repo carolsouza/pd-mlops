@@ -1,0 +1,29 @@
+{
+  "rows": 7043,
+  "columns": 21,
+  "dtypes": {
+    "customerID": "object",
+    "gender": "object",
+    "SeniorCitizen": "int64",
+    "Partner": "object",
+    "Dependents": "object",
+    "tenure": "int64",
+    "PhoneService": "object",
+    "MultipleLines": "object",
+    "InternetService": "object",
+    "OnlineSecurity": "object",
+    "OnlineBackup": "object",
+    "DeviceProtection": "object",
+    "TechSupport": "object",
+    "StreamingTV": "object",
+    "StreamingMovies": "object",
+    "Contract": "object",
+    "PaperlessBilling": "object",
+    "PaymentMethod": "object",
+    "MonthlyCharges": "float64",
+    "TotalCharges": "object",
+    "Churn": "object"
+  },
+  "TotalCharges_dtype_original": "object",
+  "TotalCharges_nao_numericos": 11
+}

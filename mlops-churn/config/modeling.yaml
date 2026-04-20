@@ -1,0 +1,483 @@
+# modeling.yaml — Configuração de Experimentação e Modelagem
+#
+# Princípio MLOps: separação entre política (YAML) e mecanismo (código).
+# Para adicionar um modelo, mudar o espaço de busca ou o número de trials,
+# edite apenas este arquivo. O código em modelagem.py não muda.
+#
+# Pipeline: data/features/telco_customer_churn_features.parquet
+#        → mlruns/  (experimentos MLFlow)
+#        → outputs/modeling/ (artefatos: plots, métricas)
+
+# ── Pipeline de Pré-processamento (dentro do treino — leak-free) ──────────────
+#
+# GroupMedianImputer e StandardScalerTransformer foram removidos de
+# preprocessamento.py para evitar data leakage.
+# São aplicados AQUI, dentro do sklearn Pipeline, APÓS o split treino/holdout.
+#
+# imputation: lista de imputadores a encadear no Pipeline.
+#   column    : coluna a imputar (após feature_selection — coluna no X de entrada)
+#   strategy  : "group_median" → usa GroupMedianImputer de src/preprocessing.py
+#   group_by  : coluna de grupo para estratificação da mediana
+#
+# TotalCharges possui 11 NaN (0.16%) — clientes com tenure=0.
+# A imputação foi aplicada em preprocessamento.py antes das features derivadas
+# (log_TotalCharges, monthly_to_total_ratio, total_per_month), portanto o parquet
+# de entrada já não possui NaN. Imputation vazia aqui é intencional.
+#
+# scaling: lista de colunas a escalonar com StandardScalerTransformer.
+# Deve corresponder às features contínuas em features_to_keep (preprocessing.yaml).
+# Binárias (is_female, flags de serviço, dummies) e ordinais não são escaladas.
+
+pipeline:
+  imputation: []
+
+  scaling:
+    columns:
+      - "tenure"
+      - "log_tenure"
+      - "MonthlyCharges"
+      - "TotalCharges"
+      - "log_TotalCharges"
+      - "monthly_to_total_ratio"
+      - "total_per_month"
+      - "n_services"          # 0-6, contínua — LR/KNN beneficiam de escala
+      - "avg_monthly_per_service"  # razão MonthlyCharges/n_services
+
+# ── Redução de Features (via FeatureReducer — src/feature_reducer.py) ─────────
+#
+# Aplicada DEPOIS da imputação e escalonamento, ANTES do estimador final.
+# Configurada por método: none | rfe | pca | kpca
+#
+# method: método padrão usado no baseline (e em modelos sem Optuna).
+#
+# search_space.method: lista de métodos que o Optuna pode explorar por trial.
+#   Se omitido, o método é fixo (valor de method acima).
+#
+# Cada sub-chave (rfe, pca, kpca) contém:
+#   • parâmetros padrão (usados no baseline e como fallback do Optuna)
+#   • search_space: parâmetros específicos desse método que o Optuna tuneia
+#     quando escolhe esse método num trial.
+#
+# O Optuna co-otimiza: método de redução + parâmetros do método + estimador.
+feature_reduction:
+  method: "none"                # padrão para baseline; Optuna sobrescreve se search_space.method configurado
+
+  search_space:
+    method:
+      type: "categorical"
+      choices: ["none", "pca", "lda"] # pca: linear não-supervisionado; lda: supervisionado (maximiza separação)
+
+  rfe:
+    n_features_to_select: 15
+    rfe_estimator: "ridge"      # ridge | random_forest (ver src/feature_reducer.py)
+    search_space:
+      n_features_to_select:
+        type: "int"
+        low: 5
+        high: 25
+
+  pca:
+    n_components: 15
+    search_space:
+      n_components:
+        type: "int"
+        low: 5
+        high: 28
+
+  lda:
+    # LDA supervisionado — maximiza a separação entre classes no espaço projetado.
+    # Para classificação binária (Churn 0/1), LDA sempre produz 1 componente (n_classes-1).
+    # solver="svd": estável e eficiente para datasets tabulares (não requer inverter a matriz).
+    # Não há search_space: o único hiperparâmetro relevante é o solver, que "svd" já
+    # é o recomendado para dados sem multicolinearidade severa.
+    lda_solver: "svd"
+
+  kpca:
+    n_components: 15
+    kernel: "rbf"
+    gamma: null                 # null → 1/n_features (sklearn default)
+    degree: 3
+    coef0: 1.0
+    search_space:
+      n_components:
+        type: "int"
+        low: 5
+        high: 25
+      kernel:
+        type: "categorical"
+        choices: ["rbf", "poly", "cosine"]
+      gamma:
+        type: "log_float"
+        low: 1.0e-4
+        high: 10.0
+      degree:
+        type: "int"
+        low: 2
+        high: 5
+      coef0:
+        type: "float"
+        low: 0.0
+        high: 1.0
+
+# ── Configuração Geral do Experimento ─────────────────────────────────────────
+modeling:
+  experiment_name: "telco-churn-experiments"
+  tracking_uri: "sqlite:///mlruns.db"   # SQLite — substitui a pasta mlruns/
+  registry_name: "telco-churn-best"
+  random_seed: 13
+
+# ── Divisão Treino / Holdout ──────────────────────────────────────────────────
+# holdout é separado ANTES de qualquer treino e nunca é visto durante a busca.
+# stratify_bins=2: target binário (Churn 0/1) — pd.qcut cria 2 grupos por quantil,
+# equivalendo a estratificação direta pela classe.
+holdout:
+  test_size: 0.2                    # 20% dos dados → holdout final
+  stratify_bins: 2                  # target binário: 2 bins = estratificação por classe
+
+# ── Cross-Validation ──────────────────────────────────────────────────────────
+# KFold com shuffle — adequado para o volume (7K amostras).
+# n_splits=5 equilibra variância da estimativa e custo computacional.
+cv:
+  strategy: "stratified_kfold"      # kfold | stratified_kfold (lido pelo código de modelagem)
+  n_splits: 5
+  shuffle: true
+
+# ── Otimizador ───────────────────────────────────────────────────────────────
+# strategy: seleciona a estratégia de busca de hiperparâmetros
+#   optuna          → Bayesian TPE via Optuna (padrão recomendado)
+#   grid_search     → GridSearchCV — exaustivo, bom para espaços pequenos
+#   randomized_search → RandomizedSearchCV — rápido para espaços grandes
+#
+# default_trials: nº de trials usado por TODOS os modelos e ensembles.
+# Para sobrescrever por modelo, adicione optuna_trials: N na entrada do modelo.
+optimizer:
+  strategy: "optuna"              # optuna | grid_search | randomized_search
+
+  optuna:
+    default_trials: 30
+    sampler: "tpe"                # tpe | random | cmaes
+
+  grid_search: {}                 # sem config extra — usa search_space diretamente
+
+  randomized_search:
+    n_iter: 50                    # número de combinações aleatórias a amostrar
+
+# ── Métricas ──────────────────────────────────────────────────────────────────
+# primary: ROC-AUC — robusta ao desbalanceamento (73% / 27%) e independe de threshold.
+# additional: registradas no MLFlow mas não usadas para seleção.
+# F1, precision e recall complementam a AUC na análise de negócio (custo do churn).
+metrics:
+  primary: "roc_auc"
+  additional:
+    - "f1"
+    - "precision"
+    - "recall"
+    - "accuracy"
+
+# ── Modelos ───────────────────────────────────────────────────────────────────
+# Cada entrada define:
+#   enabled        : ativa/desativa o modelo sem remover a configuração
+#   module/class   : importação dinâmica (importlib) — sem hardcode no código
+#   default_params : parâmetros usados no baseline e como base para o Optuna
+#   search_space   : espaço de busca do Optuna por parâmetro
+#
+# class_weight="balanced": compensa automaticamente o desbalanceamento 73%/27%.
+# Aplica-se a modelos sklearn; XGBoost usa scale_pos_weight no lugar.
+#
+# Tipos suportados em search_space:
+#   log_float  → suggest_float(low, high, log=True)   — C, learning_rate
+#   float      → suggest_float(low, high)              — subsample, frações
+#   int        → suggest_int(low, high)                — n_estimators, profundidade
+#   categorical→ suggest_categorical(choices)          — kernel, criterion, etc.
+
+models:
+
+  # ── Regressão Logística ───────────────────────────────────────────────────────
+  # Baseline linear interpretável — referência mínima de performance.
+  # class_weight="balanced" ajusta pesos inversamente à frequência das classes.
+  logistic_regression:
+    enabled: true
+    module: "sklearn.linear_model"
+    class: "LogisticRegression"
+    default_params:
+      max_iter: 1000
+      class_weight: "balanced"
+      random_state: 13
+    search_space:
+      C:
+        type: "log_float"
+        low: 1.0e-4
+        high: 1.0e4
+      penalty:
+        type: "categorical"
+        choices: ["l2", "l1"]
+      solver:
+        type: "categorical"
+        choices: ["liblinear", "saga"]   # ambos suportam l1 e l2; lbfgs só suporta l2
+
+  # ── Árvore de Decisão ────────────────────────────────────────────────────────
+  # max_depth controla profundidade máxima (sem limite = risco de overfitting).
+  # min_samples_split e min_samples_leaf regularizam a divisão dos nós.
+  decision_tree:
+    enabled: true
+    module: "sklearn.tree"
+    class: "DecisionTreeClassifier"
+    default_params:
+      random_state: 13
+      class_weight: "balanced"
+    search_space:
+      max_depth:
+        type: "int"
+        low: 2
+        high: 15
+      min_samples_split:
+        type: "int"
+        low: 2
+        high: 50
+      min_samples_leaf:
+        type: "int"
+        low: 1
+        high: 20
+      criterion:
+        type: "categorical"
+        choices: ["gini", "entropy"]
+
+  # ── K-Nearest Neighbors ──────────────────────────────────────────────────────
+  # KNN é sensível à escala — os dados já estão normalizados pelo preprocessing.
+  # n_neighbors é o hiperparâmetro mais importante.
+  # metric=minkowski + p=2 equivale à distância euclidiana.
+  knn:
+    enabled: true
+    module: "sklearn.neighbors"
+    class: "KNeighborsClassifier"
+    default_params:
+      n_neighbors: 5
+      n_jobs: -1
+    search_space:
+      n_neighbors:
+        type: "int"
+        low: 3
+        high: 30
+      weights:
+        type: "categorical"
+        choices: ["uniform", "distance"]
+      metric:
+        type: "categorical"
+        choices: ["euclidean", "manhattan", "minkowski"]
+      leaf_size:
+        type: "int"
+        low: 10
+        high: 60
+
+  # ── Support Vector Classification ────────────────────────────────────────────
+  # SVC com kernel RBF é O(n²) no treino — LENTO em datasets grandes.
+  # probability=True é necessário para predict_proba e cálculo de ROC-AUC.
+  # max_samples_for_tuning: subsampling durante trials do Optuna para viabilizar
+  #   a busca. O modelo final é treinado com todos os dados.
+  svc:
+    enabled: true
+    module: "sklearn.svm"
+    class: "SVC"
+    default_params:
+      kernel: "rbf"
+      C: 1.0
+      probability: true
+      class_weight: "balanced"
+    max_samples_for_tuning: 3000    # subsample p/ velocidade nos trials
+    search_space:
+      kernel:
+        type: "categorical"
+        choices: ["rbf", "linear"]
+      C:
+        type: "log_float"
+        low: 0.1
+        high: 1000.0
+      gamma:
+        type: "categorical"
+        choices: ["scale", "auto"]  # só usado por rbf
+
+  # ── Random Forest ────────────────────────────────────────────────────────────
+  # Ensemble de árvores independentes — baixa correlação entre elas é essencial.
+  # max_features como fração controla a diversidade entre as árvores.
+  random_forest:
+    enabled: true
+    module: "sklearn.ensemble"
+    class: "RandomForestClassifier"
+    default_params:
+      n_estimators: 100
+      random_state: 13
+      class_weight: "balanced"
+      n_jobs: -1
+    search_space:
+      n_estimators:
+        type: "int"
+        low: 50
+        high: 400
+      max_depth:
+        type: "int"
+        low: 3
+        high: 20
+      min_samples_split:
+        type: "int"
+        low: 2
+        high: 20
+      max_features:
+        type: "float"
+        low: 0.2
+        high: 1.0
+
+  # ── Gradient Boosting ─────────────────────────────────────────────────────────
+  # Boosting sequencial — cada árvore corrige os erros da anterior.
+  # learning_rate e n_estimators são inversamente relacionados (shrinkage).
+  gradient_boosting:
+    enabled: true
+    module: "sklearn.ensemble"
+    class: "GradientBoostingClassifier"
+    default_params:
+      n_estimators: 100
+      random_state: 13
+    search_space:
+      n_estimators:
+        type: "int"
+        low: 50
+        high: 400
+      max_depth:
+        type: "int"
+        low: 2
+        high: 8
+      learning_rate:
+        type: "log_float"
+        low: 0.01
+        high: 0.5
+      subsample:
+        type: "float"
+        low: 0.5
+        high: 1.0
+      min_samples_split:
+        type: "int"
+        low: 2
+        high: 20
+
+  # ── XGBoost ──────────────────────────────────────────────────────────────────
+  # Gradient boosting otimizado com regularização L1/L2 e column subsampling.
+  # reg_alpha (L1) induz esparsidade; colsample_bytree reduz correlação entre árvores.
+  # scale_pos_weight = n_negativos / n_positivos = 5174/1869 ≈ 2.77
+  # Compensa o desbalanceamento sem precisar de class_weight (não suportado no XGB).
+  xgboost:
+    enabled: true
+    module: "xgboost"
+    class: "XGBClassifier"
+    default_params:
+      n_estimators: 100
+      random_state: 13
+      verbosity: 0
+      n_jobs: -1
+      eval_metric: "logloss"
+      scale_pos_weight: 2.77        # 5174 / 1869 — compensa desbalanceamento
+    search_space:
+      n_estimators:
+        type: "int"
+        low: 50
+        high: 500
+      max_depth:
+        type: "int"
+        low: 3
+        high: 10
+      learning_rate:
+        type: "log_float"
+        low: 0.01
+        high: 0.5
+      subsample:
+        type: "float"
+        low: 0.5
+        high: 1.0
+      colsample_bytree:
+        type: "float"
+        low: 0.4
+        high: 1.0
+      reg_alpha:
+        type: "log_float"
+        low: 1.0e-5
+        high: 10.0
+
+  # ── LightGBM ─────────────────────────────────────────────────────────────────
+  # Gradient boosting baseado em histogramas — mais rápido que XGBoost em datasets
+  # grandes. num_leaves controla a complexidade da árvore (leaf-wise growth).
+  lightgbm:
+    enabled: true
+    module: "lightgbm"
+    class: "LGBMClassifier"
+    default_params:
+      n_estimators: 100
+      random_state: 13
+      verbosity: -1
+      n_jobs: -1
+      class_weight: "balanced"
+    search_space:
+      n_estimators:
+        type: "int"
+        low: 50
+        high: 500
+      num_leaves:
+        type: "int"
+        low: 20
+        high: 200
+      learning_rate:
+        type: "log_float"
+        low: 0.01
+        high: 0.5
+      subsample:
+        type: "float"
+        low: 0.5
+        high: 1.0
+      reg_alpha:
+        type: "log_float"
+        low: 1.0e-5
+        high: 10.0
+      colsample_bytree:
+        type: "float"
+        low: 0.4
+        high: 1.0
+
+# ── Ensembles ─────────────────────────────────────────────────────────────────
+# Construídos APÓS toda a otimização individual.
+# Os N melhores modelos (por CV ROC-AUC) são usados como base.
+#
+# StackingClassifier: usa out-of-fold predictions como features para um meta-learner.
+#   Optuna otimiza o C da Regressão Logística (meta-learner) e o flag passthrough.
+#
+# VotingClassifier: média das probabilidades dos modelos base (voting="soft").
+#   soft usa predict_proba — melhor para ROC-AUC do que hard voting.
+#   Optuna otimiza os pesos inteiros de cada modelo base (1..10).
+ensembles:
+  top_n_base_models: 3              # usa os N melhores individuais como base
+
+  stacking:
+    enabled: true
+    inner_cv_folds: 5               # CV interno do stacking
+    meta_learner_search_space:
+      meta_C:
+        type: "log_float"
+        low: 1.0e-4
+        high: 1.0e4
+
+  voting:
+    enabled: true
+    voting: "soft"                  # soft usa predict_proba — melhor para ROC-AUC
+    weight_low: 1                   # peso mínimo por modelo base
+    weight_high: 10                 # peso máximo por modelo base
+
+# ── Artefatos ─────────────────────────────────────────────────────────────────
+# Todos os plots são salvos em output_dir e logados no MLFlow como artefatos.
+artifacts:
+  output_dir: "outputs/modeling"
+  save_plots: true
+  plots:
+    - "confusion_matrix"            # VP/VN/FP/FN com threshold=0.5
+    - "roc_curve"                   # curva ROC com AUC (threshold-free)
+    - "precision_recall_curve"      # mais informativa que ROC em dados desbalanceados
+    - "feature_importance"          # top features por importância do modelo
+    - "cv_fold_comparison"          # ROC-AUC por fold (robustez)
+    - "calibration_curve"           # calibração das probabilidades preditas
+    - "optuna_optimization_history" # evolução do objetivo por trial
+    - "optuna_param_importances"    # importância dos hiperparâmetros no Optuna
